@@ -85,23 +85,34 @@ function AuthPage() {
     };
   }, [user, loading, verifyEmail]);
 
-  const useAnotherGoogle = useCallback(async () => {
-    setBusy(true);
-    try {
-      localStorage.removeItem(PORTAL_VERIFIED_KEY);
-      await supabase.auth.signOut();
-      setStep("start");
-      setVerifiedEmail("");
-      await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin + "/auth",
-        extraParams: { prompt: "select_account" },
-      });
-    } catch {
-      toast.error("Could not switch Google account");
-    } finally {
-      setBusy(false);
-    }
-  }, []);
+const useAnotherGoogle = useCallback(async () => {
+  setBusy(true);
+
+  try {
+    localStorage.removeItem(PORTAL_VERIFIED_KEY);
+    await supabase.auth.signOut();
+
+    setStep("start");
+    setVerifiedEmail("");
+
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth`,
+        queryParams: {
+          prompt: "select_account",
+        },
+      },
+    });
+
+    if (error) throw error;
+  } catch (err: any) {
+    console.error("Google account switch error:", err);
+    toast.error(err?.message ?? "Could not switch Google account");
+  } finally {
+    setBusy(false);
+  }
+}, []);
 
 const signInWithGoogle = async () => {
   setBusy(true);
