@@ -103,20 +103,35 @@ function AuthPage() {
     }
   }, []);
 
-  const signInWithGoogle = async () => {
-    setBusy(true);
-    try {
-      localStorage.removeItem(PORTAL_VERIFIED_KEY);
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin + "/auth",
-      });
-      if (result.error) throw new Error("Google sign-in failed");
-    } catch (err: any) {
-      toast.error(err.message ?? "Google sign-in failed");
-    } finally {
-      setBusy(false);
+const signInWithGoogle = async () => {
+  setBusy(true);
+
+  try {
+    localStorage.removeItem(PORTAL_VERIFIED_KEY);
+
+    const redirectUri = `${window.location.origin}/auth`;
+
+    console.log("Google redirect URI:", redirectUri);
+
+    const result = await lovable.auth.signInWithOAuth("google", {
+      redirect_uri: redirectUri,
+      extraParams: {
+        prompt: "select_account",
+      },
+    });
+
+    console.log("Google OAuth result:", result);
+
+    if (result?.error) {
+      throw new Error(result.error.message ?? "Google sign-in failed");
     }
-  };
+  } catch (err: any) {
+    console.error("Google OAuth error:", err);
+    toast.error(err?.message ?? "Google sign-in failed");
+  } finally {
+    setBusy(false);
+  }
+};
 
   if (!hydrated) return null;
 
