@@ -109,24 +109,19 @@ const signInWithGoogle = async () => {
   try {
     localStorage.removeItem(PORTAL_VERIFIED_KEY);
 
-    const redirectUri = `${window.location.origin}/auth`;
-
-    console.log("Google redirect URI:", redirectUri);
-
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: redirectUri,
-      extraParams: {
-        prompt: "select_account",
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: `${window.location.origin}/auth`,
+        queryParams: {
+          prompt: "select_account",
+        },
       },
     });
 
-    console.log("Google OAuth result:", result);
-
-    if (result?.error) {
-      throw new Error(result.error.message ?? "Google sign-in failed");
-    }
+    if (error) throw error;
   } catch (err: any) {
-    console.error("Google OAuth error:", err);
+    console.error("Google sign-in error:", err);
     toast.error(err?.message ?? "Google sign-in failed");
   } finally {
     setBusy(false);
